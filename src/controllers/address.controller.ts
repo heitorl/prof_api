@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { addressService } from "../servcices";
+import { addressService } from "../services";
 
 
 class addressController {  

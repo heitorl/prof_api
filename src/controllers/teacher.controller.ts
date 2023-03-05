@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { teacherService } from "../servcices";
+import { teacherService } from "../services";
 
 
 class TeacherController {
@@ -15,6 +15,15 @@ class TeacherController {
     const teacher = await teacherService.register(req)
     
     return res.status(201).json(teacher)
+  }
+
+  updateAvatar = async (req: Request, res: Response): Promise<Response> => {
+      // const avatarFile = req.file.fileName
+      const avatarFile = req.file.filename
+      console.log(req.file)
+      const updateAvatar = await teacherService.updateTeacherAvatar(req, avatarFile)
+  
+      return res.status(200).json(updateAvatar)
   }
 
 }

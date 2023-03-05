@@ -10,6 +10,7 @@ import { serializedCreateStudentSchema } from "../schemas";
 import teacherRepositorie from "../repositories/teacher.repositorie";
 import { requestDistanceMaps } from "../requests"
 import { serializedAddressTeacherUtil } from "../utils/serializedAddresTeacher.util";
+import { deleteFile } from "../utils/file";
 
 env.config()
 
@@ -103,11 +104,21 @@ class StudentService {
 
     }catch (error) {
       console.log(error)
-    }
-      
-       
+    }      
 
   } 
+
+
+  updateStudentAvatar = async ({ decoded }: Request, avatarFile : string): Promise<void> => {
+    const student: Student = await studentRepositorie.findOne({id: (decoded as Teacher).id})
+    if(student.avatar)
+      await deleteFile(`./src/tmp/studentAvatar/${student.avatar}`)   
+    
+    student.avatar = avatarFile
+
+    await teacherRepositorie.save(student)   
+
+  }
  
 
 

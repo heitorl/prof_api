@@ -4,7 +4,7 @@ declare global {
   namespace Express {
     interface Request {
       validated?: Teacher | Student | Address
-      decoded?: Teacher | Student
+      decoded?: Teacher | Student      
     }
   }
 }

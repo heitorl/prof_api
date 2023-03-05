@@ -6,7 +6,7 @@ import * as env from "dotenv"
 import { AssertsShape } from "yup/lib/object";
 import { hash } from "bcrypt";
 import { serializedCreateTeacherSchema } from "../schemas";
-
+import { deleteFile } from "../utils/file";
 
 env.config()
 
@@ -62,6 +62,16 @@ class TeacherService {
     });
   }
 
+  updateTeacherAvatar = async ({ decoded }: Request, avatarFile : string): Promise<void> => {
+    const teacher: Teacher = await teacherRepositorie.findOne({id: (decoded as Teacher).id})
+    if(teacher.avatar)
+      await deleteFile(`./src/tmp/teacherAvatar/${teacher.avatar}`)   
+    
+    teacher.avatar = avatarFile
+
+    await teacherRepositorie.save(teacher)   
+
+  }
 
 
 }
