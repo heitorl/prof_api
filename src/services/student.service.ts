@@ -1,16 +1,19 @@
 import { sign } from "jsonwebtoken";
-import { Request } from "express"
+import { query, Request } from "express"
 import * as env from "dotenv"
 import { AssertsShape } from "yup/lib/object";
 import { hash } from "bcrypt";
 import { Student, Teacher } from "../entities";
-import { addressRepositorie, StudentRepositorie } from "../repositories";
+import { addressRepositorie, assessmentRepositorie, StudentRepositorie } from "../repositories";
 import studentRepositorie from "../repositories/student.repositorie";
 import { serializedCreateStudentSchema } from "../schemas";
 import teacherRepositorie from "../repositories/teacher.repositorie";
 import { requestDistanceMaps } from "../requests"
 import { serializedAddressTeacherUtil } from "../utils/serializedAddresTeacher.util";
 import { deleteFile } from "../utils/file";
+import { Assessments } from "../entities/Assessments";
+import { AppDataSource } from "../data-source";
+import { UsingJoinColumnIsNotAllowedError } from "typeorm";
 
 env.config()
 
@@ -120,6 +123,36 @@ class StudentService {
 
   }
  
+  updateGradesToTeacher = async (req: Request) => {
+    try{
+   
+      console.log('--')
+      const student: Student = await studentRepositorie.findOne({id: (req.decoded as Student).id})
+      const teacher: Teacher = await teacherRepositorie.findOne({id: req.query.id})
+
+      
+      
+      console.log(await student.assessment, '===student')
+      // const saved = await assessmentRepositorie.save({
+      //   detail: req.body.detail,    
+      //   note: req.body.note,    
+      //   student: student,
+      //   teacher: teacher
+      // })
+
+      const assessment = await assessmentRepositorie.findOne({})
+      console.log( await teacher.assessment, '===teacher')
+      console.log(await assessment.teacher, 'assesment')
+      
+      return ""
+    }catch(error){
+      console.log(error)
+    }
+
+
+
+
+  } 
 
 
 }

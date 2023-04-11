@@ -7,6 +7,7 @@ import { AssertsShape } from "yup/lib/object";
 import { hash } from "bcrypt";
 import { serializedCreateTeacherSchema } from "../schemas";
 import { deleteFile } from "../utils/file";
+import { returnUserWithOutPassword } from "../utils/serializedAddresTeacher.util";
 
 env.config()
 
@@ -50,7 +51,9 @@ class TeacherService {
       }
     );
 
-    return { status: 200, message: { token }}
+    const user = returnUserWithOutPassword({...teacher })
+
+    return { status: 200, message: { user, token }}
   }
 
   register = async({ validated }: Request): Promise<AssertsShape<any>> => {

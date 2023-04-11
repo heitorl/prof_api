@@ -1,7 +1,9 @@
 import { compare } from "bcrypt"
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne, GridFSBucketReadStream, ManyToOne } from "typeorm"
 import { Address } from "./Address"
+import { Assessments } from "./Assessments"
 import { Discipline } from "./Discipline"
+import { Student } from "./Student"
 
 @Entity("teachers")
 export class Teacher {
@@ -21,7 +23,13 @@ export class Teacher {
     @Column()
     password: string
 
-    @Column()
+    // @Column()
+    // grades: Array;
+
+    // @Column()
+    // gradesAll: Number;
+
+    @Column({nullable: true})
     avatar: string
 
     @CreateDateColumn()
@@ -32,6 +40,9 @@ export class Teacher {
 
     @OneToMany(() => Discipline, (discipline) => discipline.teacher)
     disciplines: Discipline[]
+
+    @OneToMany(() => Assessments, (assessment) => assessment.teacher, { lazy: true } )
+    assessment: Assessments[];
 
     @OneToOne(() => Address, (address) => address.teacher, { lazy: true })
     address: Address;

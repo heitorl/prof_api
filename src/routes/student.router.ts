@@ -13,4 +13,6 @@ studentRouter.get("/register", validateSchema(createStudentSchema), verifyAccoun
 studentRouter.get("/search",validateToken, studentController.findTeacherAproximation)
 studentRouter.patch("/avatar", validateToken, multer(multerConfig('studentAvatar')).single('file'), studentController.updateAvatar)
 
+studentRouter.patch("/assessments", validateToken, studentController.updateGradeTeacher)
+
 export default studentRouter

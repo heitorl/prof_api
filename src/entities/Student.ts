@@ -1,6 +1,8 @@
 import { compare } from "bcrypt"
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, OneToMany } from "typeorm"
 import { Address } from "./Address"
+import { Assessments } from "./Assessments"
+import { Teacher } from "./Teacher"
 
 @Entity("students")
 export class Student {
@@ -20,8 +22,11 @@ export class Student {
     @Column()
     password: string
     
-    @Column()
+    @Column({nullable: true})
     avatar: string
+
+    @OneToMany(() => Assessments, (assessment) => assessment.student, { lazy: true } )
+    assessment: Assessments[];
 
     @CreateDateColumn()
     createdAt?: Date 

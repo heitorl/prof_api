@@ -28,3 +28,11 @@ export const serializedAddressTeacherUtil = async (address: any) => {
   return serializedTeacher
 
 }
+
+
+export const returnUserWithOutPassword = (dataUser: any) => {
+
+  const {password, ...user} = dataUser
+
+  return user
+}
