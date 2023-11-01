@@ -2,6 +2,7 @@ import { compare } from "bcrypt"
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne, GridFSBucketReadStream, ManyToOne } from "typeorm"
 import { Address } from "./Address"
 import { Assessments } from "./Assessments"
+import { Curriculum } from "./Curriculum"
 import { Discipline } from "./Discipline"
 import { Student } from "./Student"
 
@@ -38,14 +39,17 @@ export class Teacher {
     @UpdateDateColumn()
     updatedAt?: Date
 
-    @OneToMany(() => Discipline, (discipline) => discipline.teacher)
+    @OneToMany(() => Discipline, (discipline) => discipline.teacher, { eager: true })
     disciplines: Discipline[]
 
-    @OneToMany(() => Assessments, (assessment) => assessment.teacher, { lazy: true } )
+    @OneToMany(() => Assessments, (assessment) => assessment.teacher, { eager: true } )
     assessment: Assessments[];
 
-    @OneToOne(() => Address, (address) => address.teacher, { lazy: true })
+    @OneToOne(() => Address, (address) => address.teacher, { eager: true })
     address: Address;
+
+    @OneToOne(() => Curriculum, (curriculum) => curriculum.teacher, { eager: true })
+    curriculum: Curriculum;
 
     comparePwd = async (pwdString: string): Promise<boolean> => {
         return await compare(pwdString, this.password)

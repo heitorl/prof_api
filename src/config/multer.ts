@@ -11,7 +11,7 @@ export const multerConfig = (folder: string) => {
       callback(null, path.resolve(__dirname, "..", "tmp", folder))
     },
     filename: (req, file, callback) => {
-      crypto.randomBytes(16, (err, hash) => {
+      crypto.randomBytes(4, (err, hash) => {
         // if (err) callback(err, "")
 
         const fileName = `${hash.toString('hex')}-${file.originalname}` 

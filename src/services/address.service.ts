@@ -22,7 +22,6 @@ class AddressService {
       console.log(validated as Address)
       
       const address: Address = await addressRepositorie.save({...(validated as Address), teacher})
-      console.log("ENTROUU", address.teacher)
 
       return await serializedCreateAddressSchema.validate(address, {
         stripUnknown: true,

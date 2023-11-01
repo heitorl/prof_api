@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, JoinColumn } from "typeorm"
+import { Teacher } from "./Teacher"
 
 @Entity("curriculum")
 export class Curriculum {
@@ -24,6 +25,10 @@ export class Curriculum {
     @Column({nullable: true})
     celullar?: string
 
-    @Column({nullable: true})
+    @Column({nullable: true , default: '["Adcione aqui um resumo sobre você e sua carreira profissional"]'})
     resume?: string
+
+    @OneToOne(() => Teacher, (teacher) => teacher.curriculum)
+    @JoinColumn()
+    teacher: Teacher;
 }

@@ -126,7 +126,6 @@ class StudentService {
   updateGradesToTeacher = async (req: Request) => {
     try{
    
-      console.log('--')
       const student: Student = await studentRepositorie.findOne({id: (req.decoded as Student).id})
       const teacher: Teacher = await teacherRepositorie.findOne({id: req.query.id})
 
@@ -140,9 +139,7 @@ class StudentService {
       //   teacher: teacher
       // })
 
-      const assessment = await assessmentRepositorie.findOne({})
-      console.log( await teacher.assessment, '===teacher')
-      console.log(await assessment.teacher, 'assesment')
+      const assessment = await assessmentRepositorie.findOne({})    
       
       return ""
     }catch(error){

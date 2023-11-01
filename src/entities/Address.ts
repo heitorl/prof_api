@@ -23,7 +23,7 @@ export class Address {
     @Column()
     cep: string
 
-    @OneToOne(() => Teacher, (teacher) => teacher.address, { eager: true })
+    @OneToOne(() => Teacher, (teacher) => teacher.address)
     @JoinColumn()
     teacher: Teacher;
 

@@ -7,8 +7,9 @@ export class Discipline {
     @PrimaryGeneratedColumn("uuid")
     id?: string
 
-    @Column()
-    name: string
+    @Column('json', { nullable: true })
+    disciplines: string[];
+
 
     @ManyToOne(() => Teacher, (teacher) => teacher.disciplines)
     teacher: Teacher;

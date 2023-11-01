@@ -15,10 +15,10 @@ export class Assessments {
     note: Number
     
 
-    @ManyToOne(() => Student, (student) => student.assessment, { eager: true } )
+    @ManyToOne(() => Student, (student) => student.assessment )
     student: Student;
 
-    @ManyToOne(() => Teacher, (teacher) => teacher.assessment, { eager: true })
+    @ManyToOne(() => Teacher, (teacher) => teacher.assessment)
     teacher: Teacher;
     
 }
