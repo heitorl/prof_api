@@ -4,24 +4,23 @@
 //   number:
 // }
 
-export const serializedAddressTeacherUtil = async (address: any) => {
+export const serializedAddressTeacherUtil = async (teacher) => {
   const serializedTeacher = [];
-  for (let i = 0; i < address.length; i++) {
-    console.log(address[i]);
+  for (let i = 0; i < teacher.length; i++) {
     serializedTeacher.push({
-      id: address[i].id,
-      street: address[i].street,
-      neighborhood: address[i].neighborhood,
-      number: address[i].number,
-      city: address[i].city,
-      cep: address[i].cep,
+      id: teacher[i].id,
+      street: teacher[i].street,
+      neighborhood: teacher[i].neighborhood,
+      number: teacher[i].number,
+      city: teacher[i].city,
+      cep: teacher[i].cep,
       teacher: {
-        id: address[i].teacher.id,
-        name: address[i].teacher.name,
-        email: address[i].teacher.email,
+        id: teacher[i].teacher.id,
+        name: teacher[i].teacher.name,
+        email: teacher[i].teacher.email,
       },
       distanceValue: {
-        value: address[i].distanceValue,
+        value: teacher[i].distanceValue,
       },
     });
   }

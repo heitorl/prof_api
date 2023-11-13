@@ -90,7 +90,6 @@ class TeacherService {
   };
 
   getAvatarById = async ({ query }: Request): Promise<string> => {
-    console.log(query.id);
     try {
       const teacher: Teacher = await teacherRepositorie.findOne({
         id: query.id,
@@ -137,7 +136,7 @@ class TeacherService {
 
     if (teacher) {
       const { name, email, lastName } = body;
-
+      console.log(body, "----");
       const user = {
         name: name || teacher.name,
         lastName: lastName || teacher.lastName,
@@ -150,17 +149,17 @@ class TeacherService {
         email: user.email,
       });
 
-      if (body.celullar) {
+      if (body.phone) {
         await curriculumRepository.update(curriculumToUpdate.id, {
-          celullar: body.celullar,
+          celullar: body.phone,
           teacher,
         });
       }
 
-      if (body.disciplines) {
-        const disciplinesArray = Array.isArray(body.disciplines)
-          ? body.disciplines
-          : [body.disciplines];
+      if (body.selectedDisciplines.length > 0) {
+        const disciplinesArray = Array.isArray(body.selectedDisciplines)
+          ? body.selectedDisciplines
+          : [body.selectedDisciplines];
 
         if (teacher.disciplines[0].disciplines.length < 3) {
           const remainingDisciplines =
@@ -178,7 +177,7 @@ class TeacherService {
             teacher,
           });
 
-          return ("Dados salvos com sucesso.");
+          return "Dados salvos com sucesso.";
         } else {
           throw new Error("O professor já possui 3 disciplinas.");
         }
@@ -205,7 +204,6 @@ class TeacherService {
       });
 
       if (curriculumToUpdate) {
-        console.log((validated as Curriculum).resume);
         const updatedDiscipline = await disciplineRepository.update(
           teacher.disciplines[0].id,
           {
