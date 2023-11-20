@@ -1,10 +1,10 @@
-import { Address, Student, Teacher } from "../../entities";
+import { Address, Curriculum, Discipline, Student, Teacher } from "../../entities";
 
 declare global {
   namespace Express {
     interface Request {
-      validated?: Teacher | Student | Address
-      decoded?: Teacher | Student
+      validated?: Teacher | Student | Address | Discipline | Curriculum
+      decoded?: Teacher | Student      
     }
   }
 }

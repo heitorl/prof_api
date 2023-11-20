@@ -1,4 +1,6 @@
 import { Router } from "express";
+import multer from "multer";
+import { multerConfig } from "../config/multer";
 import { studentController } from "../controllers";
 import { validateSchema, validateToken, verifyAccountExists } from "../middlewares";
 import { createStudentSchema, loginSchema } from "../schemas";
@@ -9,6 +11,8 @@ studentRouter.post("/login", validateSchema(loginSchema), studentController.logi
 studentRouter.post("/register", validateSchema(createStudentSchema), verifyAccountExists, studentController.register)
 studentRouter.get("/register", validateSchema(createStudentSchema), verifyAccountExists, studentController.register)
 studentRouter.get("/search",validateToken, studentController.findTeacherAproximation)
+studentRouter.patch("/avatar", validateToken, multer(multerConfig('studentAvatar')).single('file'), studentController.updateAvatar)
 
+studentRouter.patch("/assessments", validateToken, studentController.updateGradeTeacher)
 
 export default studentRouter
