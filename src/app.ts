@@ -6,7 +6,7 @@ import registerRouters from "./routes";
 
 const app = express();
 
-app.use(express.json())
+app.use(express.json());
 
 app.use(cors());
 
@@ -14,15 +14,15 @@ const serverHttp = createServer(app);
 
 const io = new Server(serverHttp, {
   cors: {
-    origin: "http://localhost:3030",
-    methods: ["GET", "POST"],
+    origin: "*",
+    methods: ["GET", "POST", "PATCH"],
     credentials: true,
+    allowedHeaders: ["Authorization", "Content-Type"],
   },
 });
 
-registerRouters(app)
+registerRouters(app);
 
 app.use(cors());
 
-
-export {serverHttp, io}
+export { serverHttp, io };

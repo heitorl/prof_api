@@ -14,7 +14,6 @@ import { returnUserWithOutPassword } from "../utils/serializedAddresTeacher.util
 import { AppDataSource } from "../data-source";
 import path from "path";
 import { existsSync } from "fs";
-import fs from "fs/promises";
 
 env.config();
 
@@ -77,16 +76,35 @@ class TeacherService {
   updateTeacherAvatar = async (
     { decoded }: Request,
     avatarFile: string
-  ): Promise<void> => {
-    const teacher: Teacher = await teacherRepositorie.findOne({
-      id: (decoded as Teacher).id,
-    });
-    if (teacher.avatar)
-      await deleteFile(`./src/tmp/teacherAvatar/${teacher.avatar}`);
+  ): Promise<string> => {
+    try {
+      const teacher: Teacher = await teacherRepositorie.findOne({
+        id: (decoded as Teacher).id,
+      });
 
-    teacher.avatar = avatarFile;
+      if (teacher.avatar) {
+        await deleteFile(`./src/tmp/teacherAvatar/${teacher.avatar}`);
+      }
 
-    await teacherRepositorie.save(teacher);
+      teacher.avatar = avatarFile;
+
+      const source = path.join(
+        __dirname,
+        "..",
+        "..",
+        "src",
+        "tmp",
+        "teacherAvatar"
+      );
+      await teacherRepositorie.save(teacher);
+
+      let avatarPath = `${source}/${teacher.avatar}`;
+
+      return avatarPath;
+    } catch (error) {
+      console.error("Error updating teacher avatar:", error);
+      throw new Error("Failed to update teacher avatar");
+    }
   };
 
   getAvatarById = async ({ query }: Request): Promise<string> => {
@@ -136,7 +154,6 @@ class TeacherService {
 
     if (teacher) {
       const { name, email, lastName } = body;
-      console.log(body, "----");
       const user = {
         name: name || teacher.name,
         lastName: lastName || teacher.lastName,
@@ -161,23 +178,31 @@ class TeacherService {
           ? body.selectedDisciplines
           : [body.selectedDisciplines];
 
-        if (teacher.disciplines[0].disciplines.length < 3) {
-          const remainingDisciplines =
-            3 - teacher.disciplines[0].disciplines.length;
-
-          for (
-            let i = 0;
-            i < Math.min(remainingDisciplines, disciplinesArray.length);
-            i++
-          ) {
-            teacher.disciplines[0].disciplines.push(disciplinesArray[i]);
-          }
-          await disciplineRepository.update(teacher.disciplines[0].id, {
-            disciplines: teacher.disciplines[0].disciplines,
+        if (!teacher.disciplines[0]?.disciplines) {
+          // Se for undefined, inicializa um objeto Discipline com um array vazio.
+          teacher.disciplines[0] = disciplineRepository.create({
+            disciplines: [],
             teacher,
           });
+        }
 
-          return "Dados salvos com sucesso.";
+        const remainingDisciplines =
+          3 - (teacher.disciplines[0]?.disciplines?.length || 0);
+
+        if (remainingDisciplines > 0) {
+          const disciplinesToAdd = disciplinesArray.slice(
+            0,
+            remainingDisciplines
+          );
+
+          teacher.disciplines[0].disciplines = [
+            ...teacher.disciplines[0].disciplines,
+            ...disciplinesToAdd,
+          ];
+
+          await disciplineRepository.save(teacher.disciplines[0]);
+
+          return teacher;
         } else {
           throw new Error("O professor já possui 3 disciplinas.");
         }
@@ -187,76 +212,47 @@ class TeacherService {
     }
   };
 
-  // console.log(updatedDiscipline);
   //TASK-REFATORE
   createCurriculum = async ({ validated, decoded }: Request) => {
     try {
-      let result;
       const teacher = await teacherRepositorie.findOne({
         id: decoded.id,
       });
 
-      const disciplineRepository = AppDataSource.getRepository(Discipline);
       const curriculumRepository = AppDataSource.getRepository(Curriculum);
 
       const curriculumToUpdate = await curriculumRepository.findOne({
-        where: { cpf: (validated as Curriculum).cpf },
+        where: { teacher: { id: decoded.id } },
       });
 
       if (curriculumToUpdate) {
-        const updatedDiscipline = await disciplineRepository.update(
-          teacher.disciplines[0].id,
-          {
-            disciplines: (validated as Discipline).disciplines,
-            teacher,
-          }
-        );
-
-        const updatedCurriculum = await curriculumRepository.update(
-          curriculumToUpdate.id,
-          {
-            cpf: (validated as Curriculum).cpf,
-            formation: (validated as Curriculum).formation,
-            skills: (validated as Curriculum).skills,
-            professional_experience: (validated as Curriculum)
-              .professional_experience,
-            linkedin: (validated as Curriculum).linkedin,
-            celullar: (validated as Curriculum).celullar,
-            resume: (validated as Curriculum).resume,
-            teacher,
-          }
-        );
-
-        result = { ...updatedCurriculum, ...updatedDiscipline };
-      } else {
-        const newDiscipline = disciplineRepository.create({
-          disciplines: (validated as Discipline).disciplines,
-          teacher,
-        });
-        const newCurriculum = curriculumRepository.create({
-          cpf: (validated as Curriculum).cpf,
+        await curriculumRepository.update(curriculumToUpdate.id, {
           formation: (validated as Curriculum).formation,
-          skills: (validated as Curriculum).skills,
           professional_experience: (validated as Curriculum)
             .professional_experience,
-          linkedin: (validated as Curriculum).linkedin,
           celullar: (validated as Curriculum).celullar,
           resume: (validated as Curriculum).resume,
           teacher,
         });
-        await disciplineRepository.save(newDiscipline);
-        await curriculumRepository.save(newCurriculum);
 
-        result = await serializedCreateCurriculumSchema.validate(
-          { ...newCurriculum, ...newDiscipline },
-          {
-            stripUnknown: true,
-          }
+        return curriculumToUpdate;
+      } else {
+        const newCurriculum = await curriculumRepository.create({
+          formation: (validated as Curriculum).formation,
+          professional_experience: (validated as Curriculum)
+            .professional_experience,
+          celullar: (validated as Curriculum).celullar,
+          resume: (validated as Curriculum).resume,
+          teacher,
+        });
+
+        const createdCurriculum = await curriculumRepository.save(
+          newCurriculum
         );
+        return createdCurriculum;
       }
-      return result;
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 }

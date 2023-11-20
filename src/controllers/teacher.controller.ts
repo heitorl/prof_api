@@ -16,7 +16,7 @@ class TeacherController {
     return res.status(201).json(teacher);
   };
 
-  updateAvatar = async (req: Request, res: Response): Promise<Response> => {
+  updateAvatar = async (req: Request, res: Response) => {
     // const avatarFile = req.file.fileName
     const avatarFile = req.file.filename;
     const updateAvatar = await teacherService.updateTeacherAvatar(
@@ -24,7 +24,7 @@ class TeacherController {
       avatarFile
     );
 
-    return res.status(200).json(updateAvatar);
+    res.sendFile(updateAvatar);
   };
 
   getAvatarController = async (req: Request, res: Response) => {

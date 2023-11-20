@@ -29,7 +29,7 @@ teacherRouter.post(
   teacherController.create
 );
 teacherRouter.patch(
-  "/register/curriculum",
+  "/curriculum",
   validateToken,
   validateSchema(createCurriculumSchema),
   teacherController.createCurriculumController
@@ -47,8 +47,3 @@ teacherRouter.patch(
 );
 
 export default teacherRouter;
-
-// (request: Request, response: Response) => {
-//   console.log(request.file)
-//   response.status(200).json({"message": "image as uploaded."})
-// })

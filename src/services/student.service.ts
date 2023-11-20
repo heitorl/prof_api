@@ -1,23 +1,16 @@
 import { sign } from "jsonwebtoken";
-import { query, Request } from "express";
+import { Request } from "express";
 import * as env from "dotenv";
 import { AssertsShape } from "yup/lib/object";
 import { hash } from "bcrypt";
 import { Student, Teacher } from "../entities";
-import {
-  addressRepositorie,
-  assessmentRepositorie,
-  StudentRepositorie,
-} from "../repositories";
+import { assessmentRepositorie, StudentRepositorie } from "../repositories";
 import studentRepositorie from "../repositories/student.repositorie";
 import { serializedCreateStudentSchema } from "../schemas";
 import teacherRepositorie from "../repositories/teacher.repositorie";
 import { requestDistanceMaps } from "../requests";
-import { serializedAddressTeacherUtil } from "../utils/serializedAddresTeacher.util";
+
 import { deleteFile } from "../utils/file";
-import { Assessments } from "../entities/Assessments";
-import { AppDataSource } from "../data-source";
-import { UsingJoinColumnIsNotAllowedError } from "typeorm";
 
 env.config();
 
@@ -75,21 +68,29 @@ class StudentService {
     });
   };
 
-  verifyTeacherAproximation = async ({ decoded }: Request): Promise<any> => {
+  verifyTeacherAproximation = async ({
+    decoded,
+    query,
+  }: Request): Promise<any> => {
     try {
-      const teacher: Teacher[] = await teacherRepositorie.all();
+      const teachers: Teacher[] = await teacherRepositorie.all();
       const student: Student = await studentRepositorie.findOne({
         id: decoded.id,
       });
+      const teacher: Teacher = await teacherRepositorie.findOne({
+        id: decoded.id,
+      });
 
-      let studentAddress = await student.address;
+      const user = student ? student : teacher;
+
+      let userAddress = user.address;
 
       const result = await Promise.all(
-        teacher.map(async (teacher) => {
+        teachers.map(async (teacher) => {
           if (await teacher.address) {
             let teacherAddress = await teacher.address;
             const distanceData = await requestDistanceMaps(
-              studentAddress.cep,
+              userAddress.cep,
               teacherAddress.cep
             );
 
@@ -108,7 +109,7 @@ class StudentService {
             (b.distanceData?.rows[0]?.elements[0]?.distance?.value || 0)
         );
 
-        const addressTeacher = await Promise.all(
+        let addressTeacher = await Promise.all(
           address.map(async (el) => {
             const status = el.distanceData?.status;
             if (status === "OK") {
@@ -117,15 +118,29 @@ class StudentService {
 
               const distanceInKilometers = Math.round(distanceValue / 1000);
 
-              return { distanceInKilometers, teacher: el.teacher };
+              return { ...el.teacher, distanceInKilometers };
             } else {
-              console.error(
-                `Error fetching distance data for teacher ${el.teacher.id}: ${status}`
-              );
-              return { teacher: el.teacher, distanceInKilometers: null };
+              // console.error(
+              //   `Error fetching distance data for teacher ${el.teacher.id}: ${status}`
+              // );
+              return { ...el.teacher, distanceInKilometers: null };
             }
           })
         );
+        if (query.disciplina) {
+          const disciplinas =
+            typeof query.disciplina === "string"
+              ? [query.disciplina]
+              : Array.isArray(query.disciplina)
+              ? query.disciplina
+              : [];
+
+          addressTeacher = addressTeacher.filter((teacher) =>
+            teacher.disciplines.some((discipline) =>
+              disciplinas.some((d) => discipline.disciplines.includes(d))
+            )
+          );
+        }
 
         return addressTeacher;
       });
