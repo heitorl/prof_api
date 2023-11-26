@@ -16,16 +16,6 @@ const serializedCreateAddressSchema = yup.object().shape({
   number: yup.number().positive().required(),
   city: yup.string().required(),
   cep: yup.string().required(),
-  teacher: yup.object().notRequired().shape({
-    id: yup.string().uuid(),
-    email: yup.string().email(),
-    name: yup.string(),
-  }),
-  student: yup.object().notRequired().shape({
-    id: yup.string().uuid(),
-    email: yup.string().email(),
-    name: yup.string(),
-  }),
 });
 
 export { createAddressSchema, serializedCreateAddressSchema };

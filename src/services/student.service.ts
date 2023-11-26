@@ -85,6 +85,10 @@ class StudentService {
 
       let userAddress = user.address;
 
+      if (!userAddress) {
+        return teachers;
+      }
+
       const result = await Promise.all(
         teachers.map(async (teacher) => {
           if (await teacher.address) {

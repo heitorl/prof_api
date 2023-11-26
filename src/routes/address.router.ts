@@ -1,18 +1,16 @@
 import { Router } from "express";
 import { addressController } from "../controllers";
-import { validateSchema, validateToken, verifyAddressAlreadyExists } from "../middlewares";
+import { validateSchema, validateToken } from "../middlewares";
 
 import { createAddressSchema } from "../schemas";
 
 const addressRouter = Router();
 
-addressRouter.post(
+addressRouter.patch(
   "",
   validateToken,
-  verifyAddressAlreadyExists,
-  validateSchema(createAddressSchema), 
+  validateSchema(createAddressSchema),
   addressController.createAddress
 );
-
 
 export default addressRouter;

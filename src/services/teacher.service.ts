@@ -1,19 +1,17 @@
 import { sign } from "jsonwebtoken";
 import { Request } from "express";
-import { Curriculum, Discipline, Teacher } from "../entities";
+import { Curriculum, Discipline, Student, Teacher } from "../entities";
 import teacherRepositorie from "../repositories/teacher.repositorie";
 import * as env from "dotenv";
 import { AssertsShape } from "yup/lib/object";
 import { hash } from "bcrypt";
-import {
-  serializedCreateCurriculumSchema,
-  serializedCreateTeacherSchema,
-} from "../schemas";
+import { serializedCreateTeacherSchema } from "../schemas";
 import { deleteFile } from "../utils/file";
 import { returnUserWithOutPassword } from "../utils/serializedAddresTeacher.util";
 import { AppDataSource } from "../data-source";
 import path from "path";
 import { existsSync } from "fs";
+import studentRepositorie from "../repositories/student.repositorie";
 
 env.config();
 
@@ -71,6 +69,28 @@ class TeacherService {
     return await serializedCreateTeacherSchema.validate(teacher, {
       stripUnknown: true,
     });
+  };
+
+  getTeacherOrStudent = async ({ params, decoded }: Request) => {
+    const id = params.id;
+    try {
+      const student: Student | null = await studentRepositorie.findOne({ id });
+      const teacher: Teacher | null = await teacherRepositorie.findOne({ id });
+
+      let role: "student" | "teacher" | null;
+
+      student ? (role = "student") : (role = "teacher");
+
+      const userWithRole = {
+        ...(student || teacher),
+        role,
+      };
+
+      return userWithRole;
+    } catch (error) {
+      console.error(error);
+      throw new Error("Internal Server Error");
+    }
   };
 
   updateTeacherAvatar = async (

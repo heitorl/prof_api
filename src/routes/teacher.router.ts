@@ -22,6 +22,7 @@ teacherRouter.post(
   validateSchema(loginSchema),
   teacherController.login
 );
+
 teacherRouter.post(
   "/register",
   validateSchema(createTeacherSchema),

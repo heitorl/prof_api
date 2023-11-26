@@ -16,6 +16,16 @@ class TeacherController {
     return res.status(201).json(teacher);
   };
 
+  getTeacherOrStudent = async (req: Request, res: Response) => {
+    try {
+      const user = await teacherService.getTeacherOrStudent(req);
+
+      return res.status(200).json(user);
+    } catch (error) {
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  };
+
   updateAvatar = async (req: Request, res: Response) => {
     // const avatarFile = req.file.fileName
     const avatarFile = req.file.filename;
