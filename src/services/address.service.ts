@@ -44,7 +44,7 @@ class AddressService {
 
       if (!user.address) {
         const address: Address = await addressRepositorie.save(addressData);
-        console.log(address, "--");
+
         return await serializedCreateAddressSchema.validate(address, {
           stripUnknown: true,
         });

@@ -10,8 +10,12 @@ import { deleteFile } from "../utils/file";
 import { returnUserWithOutPassword } from "../utils/serializedAddresTeacher.util";
 import { AppDataSource } from "../data-source";
 import path from "path";
+import AWS from "aws-sdk";
+import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
 import { existsSync } from "fs";
 import studentRepositorie from "../repositories/student.repositorie";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 env.config();
 
@@ -95,32 +99,50 @@ class TeacherService {
 
   updateTeacherAvatar = async (
     { decoded }: Request,
-    avatarFile: string
+    avatarFile: Express.Multer.File
   ): Promise<string> => {
+    const BUCKET = process.env.BUCKET;
+    const folder = "avatar_prof";
+    const region = process.env.REGION;
+
+    console.log("AWS_ACCESS_KEY_ID:", process.env.ACCESS_KEY);
+    console.log("AWS_SECRET_ACCESS_KEY:", process.env.ACCESS_SECRET_KEY);
+
+    const s3Client = new S3Client({
+      region: region,
+      credentials: {
+        accessKeyId: process.env.ACCESS_KEY,
+        secretAccessKey: process.env.ACCESS_SECRET_KEY,
+      },
+    });
+
     try {
       const teacher: Teacher = await teacherRepositorie.findOne({
         id: (decoded as Teacher).id,
       });
 
-      if (teacher.avatar) {
-        await deleteFile(`./src/tmp/teacherAvatar/${teacher.avatar}`);
-      }
+      const avatarFileName = `${uuidv4()}_${path.basename(
+        avatarFile.originalname
+      )}`;
 
-      teacher.avatar = avatarFile;
+      teacher.avatar = avatarFileName;
 
-      const source = path.join(
-        __dirname,
-        "..",
-        "..",
-        "src",
-        "tmp",
-        "teacherAvatar"
-      );
+      console.log(teacher.avatar);
+
+      const params = {
+        Bucket: BUCKET,
+        Key: `${folder}/${avatarFileName}`,
+        Body: avatarFile.buffer,
+      };
+
+      // Use async/await for the command execution
+      await s3Client.send(new PutObjectCommand(params));
+
+      teacher.avatar = avatarFileName;
       await teacherRepositorie.save(teacher);
 
-      let avatarPath = `${source}/${teacher.avatar}`;
-
-      return avatarPath;
+      const avatarUrl = `https://${BUCKET}.s3-${region}.amazonaws.com/${folder}/${avatarFileName}`;
+      return avatarUrl;
     } catch (error) {
       console.error("Error updating teacher avatar:", error);
       throw new Error("Failed to update teacher avatar");
@@ -129,25 +151,20 @@ class TeacherService {
 
   getAvatarById = async ({ query }: Request): Promise<string> => {
     try {
+      const undefinedFile =
+        "06c87ec4-9fea-4c38-b267-d69e1d376d79-undefined.png";
       const teacher: Teacher = await teacherRepositorie.findOne({
         id: query.id,
       });
-      if (!teacher || !teacher.avatar) {
-        throw new Error("Avatar not found");
+
+      const fileName = teacher.avatar;
+
+      if (!fileName) {
+        return `https://${process.env.BUCKET}.s3.${process.env.REGION}.amazonaws.com/avatars/${undefinedFile}`;
       }
-      const source = path.resolve(
-        __dirname,
-        "..",
-        "..",
-        "src",
-        "tmp",
-        "teacherAvatar"
-      );
-      let avatarPath = `${source}/${teacher.avatar}`;
-      if (!existsSync(avatarPath)) {
-        throw new Error("Avatar not found on disk");
-      }
-      return avatarPath;
+
+      const avatarUrl = `https://${process.env.BUCKET}.s3.${process.env.REGION}.amazonaws.com/avatars/${fileName}`;
+      return avatarUrl;
     } catch (error) {
       console.error(`Error fetching avatar: ${error}`);
       throw new Error("Error fetching avatar");

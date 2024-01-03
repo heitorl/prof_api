@@ -11,6 +11,7 @@ import teacherRepositorie from "../repositories/teacher.repositorie";
 import { requestDistanceMaps } from "../requests";
 
 import { deleteFile } from "../utils/file";
+import { returnUserWithOutPassword } from "../utils/serializedAddresTeacher.util";
 
 env.config();
 
@@ -51,7 +52,9 @@ class StudentService {
       }
     );
 
-    return { status: 200, message: { token } };
+    const user = returnUserWithOutPassword({ ...student });
+
+    return { status: 200, message: { token, user } };
   };
 
   register = async ({ validated }: Request): Promise<AssertsShape<any>> => {

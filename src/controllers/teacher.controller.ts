@@ -28,19 +28,17 @@ class TeacherController {
 
   updateAvatar = async (req: Request, res: Response) => {
     // const avatarFile = req.file.fileName
-    const avatarFile = req.file.filename;
-    const updateAvatar = await teacherService.updateTeacherAvatar(
-      req,
-      avatarFile
-    );
+    const avatarFile = req.file;
+    const avatarUrl = await teacherService.updateTeacherAvatar(req, avatarFile);
 
-    res.sendFile(updateAvatar);
+    res.json({ avatarUrl });
   };
 
   getAvatarController = async (req: Request, res: Response) => {
     try {
+      console.log("EEEE");
       const avatarPath = await teacherService.getAvatarById(req);
-      res.sendFile(avatarPath);
+      res.json({ avatarPath });
     } catch (error) {
       console.error(`Error sending avatar: ${error}`);
       res.status(500).send("Error sending avatar");
