@@ -87,7 +87,6 @@ class StudentService {
       const user = student ? student : teacher;
 
       let userAddress = user.address;
-
       if (!userAddress) {
         return teachers;
       }
@@ -134,6 +133,7 @@ class StudentService {
             }
           })
         );
+
         if (query.disciplina) {
           const disciplinas =
             typeof query.disciplina === "string"

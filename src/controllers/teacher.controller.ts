@@ -27,7 +27,6 @@ class TeacherController {
   };
 
   updateAvatar = async (req: Request, res: Response) => {
-    // const avatarFile = req.file.fileName
     const avatarFile = req.file;
     const avatarUrl = await teacherService.updateTeacherAvatar(req, avatarFile);
 
@@ -36,7 +35,6 @@ class TeacherController {
 
   getAvatarController = async (req: Request, res: Response) => {
     try {
-      console.log("EEEE");
       const avatarPath = await teacherService.getAvatarById(req);
       res.json({ avatarPath });
     } catch (error) {

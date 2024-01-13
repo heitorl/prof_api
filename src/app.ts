@@ -27,7 +27,6 @@ const io = new Server(serverHttp, {
 
 io.use((socket: CustomSocket, next) => {
   const userId = socket.handshake.auth.userId;
-  console.log(userId, "userid");
   if (!userId) {
     return next(new Error("Authentication error: Missing user ID"));
   }

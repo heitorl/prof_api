@@ -15,7 +15,11 @@ import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import { existsSync } from "fs";
 import studentRepositorie from "../repositories/student.repositorie";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 
 env.config();
 
@@ -105,9 +109,6 @@ class TeacherService {
     const folder = "avatar_prof";
     const region = process.env.REGION;
 
-    console.log("AWS_ACCESS_KEY_ID:", process.env.ACCESS_KEY);
-    console.log("AWS_SECRET_ACCESS_KEY:", process.env.ACCESS_SECRET_KEY);
-
     const s3Client = new S3Client({
       region: region,
       credentials: {
@@ -121,13 +122,20 @@ class TeacherService {
         id: (decoded as Teacher).id,
       });
 
+      if (teacher.avatar) {
+        const deleteParams = {
+          Bucket: BUCKET,
+          Key: `${folder}/${teacher.avatar}`,
+        };
+
+        await s3Client.send(new DeleteObjectCommand(deleteParams));
+      }
+
       const avatarFileName = `${uuidv4()}_${path.basename(
         avatarFile.originalname
       )}`;
 
       teacher.avatar = avatarFileName;
-
-      console.log(teacher.avatar);
 
       const params = {
         Bucket: BUCKET,
@@ -135,7 +143,6 @@ class TeacherService {
         Body: avatarFile.buffer,
       };
 
-      // Use async/await for the command execution
       await s3Client.send(new PutObjectCommand(params));
 
       teacher.avatar = avatarFileName;
@@ -152,7 +159,7 @@ class TeacherService {
   getAvatarById = async ({ query }: Request): Promise<string> => {
     try {
       const undefinedFile =
-        "06c87ec4-9fea-4c38-b267-d69e1d376d79-undefined.png";
+        "75dc786f-d4cc-42a6-b108-86e475fd9594_undefined.png";
       const teacher: Teacher = await teacherRepositorie.findOne({
         id: query.id,
       });
@@ -160,10 +167,10 @@ class TeacherService {
       const fileName = teacher.avatar;
 
       if (!fileName) {
-        return `https://${process.env.BUCKET}.s3.${process.env.REGION}.amazonaws.com/avatars/${undefinedFile}`;
+        return `https://${process.env.BUCKET}.s3.${process.env.REGION}.amazonaws.com/avatar_prof/${undefinedFile}`;
       }
 
-      const avatarUrl = `https://${process.env.BUCKET}.s3.${process.env.REGION}.amazonaws.com/avatars/${fileName}`;
+      const avatarUrl = `https://${process.env.BUCKET}.s3.${process.env.REGION}.amazonaws.com/avatar_prof/${fileName}`;
       return avatarUrl;
     } catch (error) {
       console.error(`Error fetching avatar: ${error}`);

@@ -1,3 +1,4 @@
+import { Request } from "express";
 import { AppDataSource } from "../data-source";
 import { Student, Teacher } from "../entities";
 import { Message } from "../entities/Message";
@@ -16,11 +17,8 @@ class MessageService {
       where: { id: from },
     });
 
-    console.log("notify ---- 1");
-
     if (teacherSender) {
       sender = teacherSender;
-      console.log("notify ---- 2");
 
       receiver =
         (await AppDataSource.getRepository(Student).findOne({
@@ -30,12 +28,10 @@ class MessageService {
           where: { id: to },
         }));
     } else {
-      console.log("notify ---- 3");
       const studentSender = await AppDataSource.getRepository(Student).findOne({
         where: { id: from },
       });
       sender = studentSender;
-      // Encontra o Teacher receptor
       receiver = await AppDataSource.getRepository(Teacher).findOne({
         where: { id: to },
       });
@@ -44,7 +40,6 @@ class MessageService {
     if (sender && receiver) {
       const newMessage = new Message();
 
-      console.log("notify ---- 4");
       newMessage.content = content;
       newMessage.senderStudent = sender instanceof Student ? sender : null;
       newMessage.senderTeacher = sender instanceof Teacher ? sender : null;
@@ -53,13 +48,58 @@ class MessageService {
       newMessage.receiverTeacher =
         receiver instanceof Teacher ? receiver : null;
 
-      console.log("notify ---- 5");
       await AppDataSource.getRepository(Message).save(newMessage);
-      console.log("notify ---- 6");
       await notificationService.createNotification(content, to, from);
 
       console.log("Messagem salva com susseco!");
     }
+  };
+
+  retrieveMessage = async ({ decoded, params }: Request) => {
+    const messages = await AppDataSource.getRepository(Message).find({
+      where: [
+        {
+          senderTeacher: { id: decoded.id },
+          receiverTeacher: { id: params.id },
+        },
+        {
+          senderTeacher: { id: params.id },
+          receiverTeacher: { id: decoded.id },
+        },
+        {
+          senderStudent: { id: decoded.id },
+          receiverTeacher: { id: params.id },
+        },
+        {
+          senderTeacher: { id: params.id },
+          receiverStudent: { id: decoded.id },
+        },
+      ],
+      order: {
+        createdAt: "ASC",
+      },
+    });
+
+    return messages.map((message) => {
+      const sender = message.senderTeacher
+        ? { id: message.senderTeacher.id, name: message.senderTeacher.name }
+        : { id: message.senderStudent.id, name: message.senderStudent.name };
+
+      const receiver = message.receiverTeacher
+        ? { id: message.receiverTeacher.id, name: message.receiverTeacher.name }
+        : {
+            id: message.receiverStudent.id,
+            name: message.receiverStudent.name,
+          };
+
+      return {
+        id: message.id,
+        content: message.content,
+        createdAt: message.createdAt,
+        sender,
+        receiver,
+      };
+    });
   };
 }
 

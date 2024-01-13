@@ -34,8 +34,6 @@ io.on("connection", (socket: CustomSocket) => {
       from,
     });
 
-    messageService.createMessage(content, to, from);
-
     if (selectedUser) {
       const selectedId = selectedUser.userID;
 
@@ -49,7 +47,7 @@ io.on("connection", (socket: CustomSocket) => {
       //   messageService.createMessage(content, to, from)
       // );
     } else {
-      console.log(`Usuário com username ${to} não encontrado.`);
+      messageService.createMessage(content, to, from);
     }
   });
 });
