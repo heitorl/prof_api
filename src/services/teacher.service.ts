@@ -6,20 +6,18 @@ import * as env from "dotenv";
 import { AssertsShape } from "yup/lib/object";
 import { hash } from "bcrypt";
 import { serializedCreateTeacherSchema } from "../schemas";
-import { deleteFile } from "../utils/file";
 import { returnUserWithOutPassword } from "../utils/serializedAddresTeacher.util";
 import { AppDataSource } from "../data-source";
 import path from "path";
 import AWS from "aws-sdk";
 import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
-import { existsSync } from "fs";
 import studentRepositorie from "../repositories/student.repositorie";
 import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
+import sharp from "sharp";
 
 env.config();
 
@@ -108,6 +106,7 @@ class TeacherService {
     const BUCKET = process.env.BUCKET;
     const folder = "avatar_prof";
     const region = process.env.REGION;
+    const MAX_SIZE_KB = 25;
 
     const s3Client = new S3Client({
       region: region,
@@ -135,12 +134,17 @@ class TeacherService {
         avatarFile.originalname
       )}`;
 
+      const compressedImageBuffer = await this.compressImage(
+        avatarFile.buffer,
+        MAX_SIZE_KB
+      );
+
       teacher.avatar = avatarFileName;
 
       const params = {
         Bucket: BUCKET,
         Key: `${folder}/${avatarFileName}`,
-        Body: avatarFile.buffer,
+        Body: compressedImageBuffer,
       };
 
       await s3Client.send(new PutObjectCommand(params));
@@ -154,6 +158,41 @@ class TeacherService {
       console.error("Error updating teacher avatar:", error);
       throw new Error("Failed to update teacher avatar");
     }
+  };
+
+  compressImage = async (
+    imageBuffer: Buffer,
+    maxSizeKB: number
+  ): Promise<Buffer> => {
+    let compressedBuffer = imageBuffer;
+    const originalSizeKB = imageBuffer.length / 1024;
+
+    // Redimensionar se necessário
+    const { width, height } = await sharp(imageBuffer).metadata();
+    if (width > 500 || height > 350) {
+      compressedBuffer = await sharp(imageBuffer)
+        .resize(400, 350, { fit: "inside" })
+        .toBuffer();
+    }
+
+    // Ajustar qualidade da compressão
+    const qualityStep = 5; // Ajuste conforme necessário
+    let currentQuality = 80; // Valor inicial
+    while (
+      compressedBuffer.length > maxSizeKB * 1024 &&
+      currentQuality >= qualityStep
+    ) {
+      compressedBuffer = await sharp(compressedBuffer)
+        .jpeg({ quality: currentQuality, progressive: true })
+        .toBuffer();
+
+      currentQuality -= qualityStep;
+    }
+
+    console.log("Original Size:", originalSizeKB, "KB");
+    console.log("Final Size:", compressedBuffer.length / 1024, "KB");
+
+    return compressedBuffer;
   };
 
   getAvatarById = async ({ query }: Request): Promise<string> => {
