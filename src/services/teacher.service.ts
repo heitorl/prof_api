@@ -117,14 +117,20 @@ class TeacherService {
     });
 
     try {
-      const teacher: Teacher = await teacherRepositorie.findOne({
-        id: (decoded as Teacher).id,
-      });
+      const user: Teacher | Student =
+        (await teacherRepositorie.findOne({
+          id: (decoded as Teacher).id,
+        })) ||
+        (await studentRepositorie.findOne({
+          id: (decoded as Student).id,
+        }));
 
-      if (teacher.avatar) {
+      console.log("user é um professor ? ", this.isTeacher(user));
+
+      if (user.avatar) {
         const deleteParams = {
           Bucket: BUCKET,
-          Key: `${folder}/${teacher.avatar}`,
+          Key: `${folder}/${user.avatar}`,
         };
 
         await s3Client.send(new DeleteObjectCommand(deleteParams));
@@ -139,7 +145,7 @@ class TeacherService {
         MAX_SIZE_KB
       );
 
-      teacher.avatar = avatarFileName;
+      user.avatar = avatarFileName;
 
       const params = {
         Bucket: BUCKET,
@@ -149,8 +155,13 @@ class TeacherService {
 
       await s3Client.send(new PutObjectCommand(params));
 
-      teacher.avatar = avatarFileName;
-      await teacherRepositorie.save(teacher);
+      user.avatar = avatarFileName;
+
+      if (this.isTeacher(user)) {
+        await teacherRepositorie.save(user);
+      } else {
+        await studentRepositorie.save(user);
+      }
 
       const avatarUrl = `https://${BUCKET}.s3-${region}.amazonaws.com/${folder}/${avatarFileName}`;
       return avatarUrl;
@@ -199,11 +210,16 @@ class TeacherService {
     try {
       const undefinedFile =
         "75dc786f-d4cc-42a6-b108-86e475fd9594_undefined.png";
-      const teacher: Teacher = await teacherRepositorie.findOne({
-        id: query.id,
-      });
 
-      const fileName = teacher.avatar;
+      const user: Teacher | Student =
+        (await teacherRepositorie.findOne({
+          id: query.id,
+        })) ||
+        (await studentRepositorie.findOne({
+          id: query.id,
+        }));
+
+      const fileName = user.avatar;
 
       if (!fileName) {
         return `https://${process.env.BUCKET}.s3.${process.env.REGION}.amazonaws.com/avatar_prof/${undefinedFile}`;
@@ -337,6 +353,13 @@ class TeacherService {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  isTeacher = (user: Teacher | Student): user is Teacher => {
+    return (
+      (user as Teacher).disciplines !== undefined ||
+      (user as Teacher).disciplines !== null
+    );
   };
 }
 
