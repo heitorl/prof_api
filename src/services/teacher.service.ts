@@ -209,7 +209,7 @@ class TeacherService {
   getAvatarById = async ({ query }: Request): Promise<string> => {
     try {
       const undefinedFile =
-        "75dc786f-d4cc-42a6-b108-86e475fd9594_undefined.png";
+        "ff76ed21-9aaf-4e42-8d37-c13e602b8708_undefined.png";
 
       const user: Teacher | Student =
         (await teacherRepositorie.findOne({
